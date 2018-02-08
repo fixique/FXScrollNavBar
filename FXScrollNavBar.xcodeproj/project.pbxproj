@@ -13,6 +13,7 @@
 		4D7A53F6202CE37A001EF34F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4D7A53F5202CE37A001EF34F /* Assets.xcassets */; };
 		4D7A53F9202CE37A001EF34F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4D7A53F7202CE37A001EF34F /* LaunchScreen.storyboard */; };
 		4D7A53FC202CE37A001EF34F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A53FB202CE37A001EF34F /* main.m */; };
+		4D7A5405202CE3CF001EF34F /* FXScrollingNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A5404202CE3CF001EF34F /* FXScrollingNavigationController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,8 @@
 		4D7A53F8202CE37A001EF34F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		4D7A53FA202CE37A001EF34F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4D7A53FB202CE37A001EF34F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		4D7A5403202CE3CF001EF34F /* FXScrollingNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FXScrollingNavigationController.h; sourceTree = "<group>"; };
+		4D7A5404202CE3CF001EF34F /* FXScrollingNavigationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FXScrollingNavigationController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +61,7 @@
 		4D7A53EB202CE37A001EF34F /* FXScrollNavBar */ = {
 			isa = PBXGroup;
 			children = (
+				4D7A5402202CE38A001EF34F /* FXScrollNavBar */,
 				4D7A53EC202CE37A001EF34F /* AppDelegate.h */,
 				4D7A53ED202CE37A001EF34F /* AppDelegate.m */,
 				4D7A53EF202CE37A001EF34F /* ViewController.h */,
@@ -67,6 +71,15 @@
 				4D7A53F7202CE37A001EF34F /* LaunchScreen.storyboard */,
 				4D7A53FA202CE37A001EF34F /* Info.plist */,
 				4D7A53FB202CE37A001EF34F /* main.m */,
+			);
+			path = FXScrollNavBar;
+			sourceTree = "<group>";
+		};
+		4D7A5402202CE38A001EF34F /* FXScrollNavBar */ = {
+			isa = PBXGroup;
+			children = (
+				4D7A5403202CE3CF001EF34F /* FXScrollingNavigationController.h */,
+				4D7A5404202CE3CF001EF34F /* FXScrollingNavigationController.m */,
 			);
 			path = FXScrollNavBar;
 			sourceTree = "<group>";
@@ -143,6 +156,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D7A53F1202CE37A001EF34F /* ViewController.m in Sources */,
+				4D7A5405202CE3CF001EF34F /* FXScrollingNavigationController.m in Sources */,
 				4D7A53FC202CE37A001EF34F /* main.m in Sources */,
 				4D7A53EE202CE37A001EF34F /* AppDelegate.m in Sources */,
 			);
