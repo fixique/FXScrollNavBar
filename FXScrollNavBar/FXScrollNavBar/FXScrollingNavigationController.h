@@ -12,7 +12,7 @@
  *  Состояния навигейшен бара
  */
 typedef NS_ENUM(NSUInteger, FXNavigationBarState) {
-    FXNavBarExpanded,       // Навигейшен бар полностью раскрыт
+    FXNavBarHide,       // Навигейшен бар полностью закрыт
     FXNavBarVisible,        // Навигейшен бар полностью видим
     FXNavBarTransitional    // Навигейшен бар находится в переходном состояние
 };
@@ -30,8 +30,12 @@ typedef NS_ENUM(NSInteger, FXNavigationBarTransitonalDirection) {
 @property (nonatomic) BOOL shouldScrollWhenContentFits;
 @property (nonatomic) BOOL expandOnActive;
 @property (nonatomic) BOOL scrollingEnable;
-@property (nonatomic, strong) NSArray *navBarSubscribers;
 @property (nonatomic, strong) UIPanGestureRecognizer *gestureRecognizer;
+
+- (void)subscribeScrollView:(UIView *)scrollableView
+                      delay:(CGFloat)delay
+          scrollSpeedFactor:(CGFloat)scrollSpeedFactor
+            expandDirection:(FXNavigationBarTransitonalDirection)expandDirection;
 
 #pragma mark - Getters and Setters
 

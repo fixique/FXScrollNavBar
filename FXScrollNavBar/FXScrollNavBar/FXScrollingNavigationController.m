@@ -19,6 +19,12 @@
 @property (nonatomic) CGFloat scrollSpeedFactor;
 @property (nonatomic) CGFloat collapseDirectionFactor;
 
+@property (nonatomic) CGSize contentSize;
+@property (nonatomic) CGPoint contentOffset;
+@property (nonatomic) CGFloat deltaLimit;
+@property (nonatomic) CGFloat navBarHeight;
+@property (nonatomic) CGFloat statusBarHeight;
+@property (nonatomic) CGFloat extendedStatusBarDifference;
 @end
 
 @implementation FXScrollingNavigationController
@@ -31,9 +37,8 @@
         _shouldScrollWhenContentFits = NO;
         _expandOnActive = YES;
         _scrollingEnable = YES;
-        _navBarSubscribers = @[];
         _scrollableView = nil;
-        _prevNavBarState = FXNavBarExpanded;
+        _prevNavBarState = FXNavBarVisible;
         _delayDistance = 0.0;
         _maxDelay = 0.0;
         _lastContentOffset = 0.0;
@@ -48,11 +53,93 @@
 - (void)subscribeScrollView:(UIView *)scrollableView
                       delay:(CGFloat)delay
           scrollSpeedFactor:(CGFloat)scrollSpeedFactor
-            expandDirection:(FXNavigationBarTransitonalDirection)expandDirection
-                subscribers:(NSArray<UIView *>*)subscribers {
+            expandDirection:(FXNavigationBarTransitonalDirection)expandDirection {
     self.scrollableView = scrollableView;
+    self.maxDelay = delay;
+    self.delayDistance = delay;
+    self.scrollingEnable = YES;
+    self.scrollSpeedFactor = scrollSpeedFactor;
+    self.collapseDirectionFactor = expandDirection;
+    
     self.gestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGesuterHandle)];
     self.gestureRecognizer.maximumNumberOfTouches = 1;
+    self.gestureRecognizer.delegate = self;
+    [self.scrollableView addGestureRecognizer:self.gestureRecognizer];
+    
+    [self registerNotifications];
+}
+
+- (void)hideNavBarAnimated:(BOOL)animated withDuration:(NSTimeInterval)duration {
+    if (!self.scrollableView && !self.visibleViewController) {
+        return;
+    }
+    
+    if (self.navBarState == FXNavBarVisible) {
+        self.navBarState = FXNavBarTransitional;
+        [UIView animateWithDuration:animated ? duration : 0 animations:^{
+            
+        } completion:^(BOOL finished) {
+            self.navBarState = FXNavBarHide;
+        }];
+    } else {
+        //TODO: UpdateNavBarAlpha
+    }
+}
+
+
+#pragma mark - Private
+
+- (void)scrollWithDelta:(CGFloat)delta ignoreDelay:(BOOL)ignoreDelay {
+    CGFloat scrollDelta = delta;
+    CGRect frame = self.navigationBar.frame;
+    
+    // Scrolling up. Hide navbar
+    if (scrollDelta > 0) {
+        if (!ignoreDelay) {
+            self.delayDistance -= scrollDelta;
+            if (self.delayDistance > 0) {
+                return;
+            }
+        }
+        
+        if (!self.shouldScrollWhenContentFits && self.navBarState != FXNavBarHide && self.scrollableView.frame.size.height >= self.contentSize.height) {
+            return;
+        }
+        
+        if (frame.origin.y - scrollDelta < -self.deltaLimit) {
+            scrollDelta = frame.origin.y + self.deltaLimit;
+        }
+        
+        if (frame.origin.y <= -self.deltaLimit) {
+            self.navBarState = FXNavBarHide;
+            self.delayDistance = self.maxDelay;
+        } else {
+            self.navBarState = FXNavBarTransitional;
+        }
+    }
+    
+    if (scrollDelta < 0) {
+        if (!ignoreDelay) {
+            self.delayDistance += scrollDelta;
+            
+            if (self.delayDistance > 0 && self.maxDelay < self.contentOffset.y) {
+                return;
+            }
+        }
+        
+        if (frame.origin.y - scrollDelta > self.statusBarHeight) {
+            scrollDelta = frame.origin.y - self.statusBarHeight;
+        }
+        
+        if (frame.origin.y >= self.statusBarHeight) {
+            self.navBarState = FXNavBarVisible;
+            self.delayDistance = self.maxDelay;
+        } else {
+            self.navBarState = FXNavBarTransitional;
+        }
+    }
+    
+    //TODO: Make update
 }
 
 #pragma mark - Getters and Setters
@@ -69,6 +156,81 @@
 
 - (void)panGesuterHandle {
     
+}
+
+#pragma mark - Notifications
+
+- (void)registerNotifications {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(didBecomeActive)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(willResignActive)
+                                                 name:UIApplicationWillResignActiveNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(deviceDidRotate)
+                                                 name:UIDeviceOrientationDidChangeNotification
+                                               object:nil];
+}
+
+- (void)didBecomeActive {
+    
+}
+
+- (void)willResignActive {
+    
+}
+
+- (void)deviceDidRotate {
+    
+}
+
+#pragma mark - Size Helpers
+
+- (CGFloat)navBarHeight {
+    return self.navigationBar.frame.size.height;
+}
+
+- (CGFloat)statusBarHeight {
+    CGFloat statusBarHeight = [UIApplication sharedApplication].statusBarFrame.size.height;
+    if (@available(iOS 11.0, *)) {
+        statusBarHeight = MAX([UIApplication sharedApplication].statusBarFrame.size.height, [UIApplication sharedApplication].delegate.window.safeAreaInsets.top);
+    }
+    return statusBarHeight - self.extendedStatusBarDifference;
+}
+
+- (CGFloat)extendedStatusBarDifference {
+    return fabs(self.view.bounds.size.height - ([UIApplication sharedApplication].delegate.window ? [UIApplication sharedApplication].delegate.window.frame.size.height : [UIScreen mainScreen].bounds.size.height));
+}
+
+- (CGSize)contentSize {
+    if (!self.scrollableView) {
+        return CGSizeZero;
+    }
+    
+    UIScrollView *scrollView = (UIScrollView *)self.scrollableView;
+    CGFloat verticalInset = scrollView.contentInset.top + scrollView.contentInset.bottom;
+    return CGSizeMake(scrollView.contentSize.width, scrollView.contentSize.height + verticalInset);
+}
+
+- (CGPoint)contentOffset {
+    return [self convertScrollabelView].contentOffset;
+}
+
+- (CGFloat)deltaLimit {
+    return self.navBarHeight - self.statusBarHeight;
+}
+
+#pragma mark - Helpers
+
+- (UIScrollView *)convertScrollabelView {
+    if ([self.scrollableView isKindOfClass:[UIWebView class]]) {
+        return (UIScrollView *)self.scrollableView;
+    } else {
+        return (UIScrollView *)self.scrollableView;
+    }
 }
 
 @end
