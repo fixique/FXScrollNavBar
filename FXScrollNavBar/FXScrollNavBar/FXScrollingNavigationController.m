@@ -140,6 +140,36 @@
     }
     
     //TODO: Make update
+    [self updateNavBarSizeWithDelta:delta];
+    
+    [self restoreContentOffsetWithDelta:delta];
+}
+
+#pragma mark - Updates
+
+- (void)updateNavBarSizeWithDelta:(CGFloat)delta {
+    CGRect navBarFrame = self.navigationBar.frame;
+    
+    // Перемещаем навбар
+    navBarFrame.origin = CGPointMake(navBarFrame.origin.x, navBarFrame.origin.y - delta);
+    self.navigationBar.frame = navBarFrame;
+    
+    if (!self.navigationBar.isTranslucent) {
+        CGFloat navBarY = self.navigationBar.frame.origin.y + self.navigationBar.frame.size.height;
+        CGRect topViewControllerFrame = self.topViewController ? self.topViewController.view.frame : CGRectZero;
+        topViewControllerFrame.origin = CGPointMake(topViewControllerFrame.origin.x, navBarY);
+        topViewControllerFrame.size = CGSizeMake(topViewControllerFrame.size.width, self.view.frame.size.height - (navBarY) - [self getTabBarOffset]);
+        self.topViewController.view.frame = topViewControllerFrame;
+    }
+}
+
+- (void)restoreContentOffsetWithDelta:(CGFloat)delta {
+    if (self.navigationBar.isTranslucent || delta == 0) {
+        return;
+    }
+    
+    UIScrollView *scrollView = [self convertScrollabelView];
+    [scrollView setContentOffset:CGPointMake(self.contentOffset.x, self.contentOffset.y - delta)];
 }
 
 #pragma mark - Getters and Setters
@@ -221,6 +251,13 @@
 
 - (CGFloat)deltaLimit {
     return self.navBarHeight - self.statusBarHeight;
+}
+
+- (CGFloat)getTabBarOffset {
+    if (self.tabBarController) {
+        return self.tabBarController.tabBar.isTranslucent ? 0 : self.tabBarController.tabBar.frame.size.height;
+    }
+    return 0;
 }
 
 #pragma mark - Helpers
