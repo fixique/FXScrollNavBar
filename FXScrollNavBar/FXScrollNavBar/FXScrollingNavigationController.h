@@ -37,6 +37,14 @@ typedef NS_ENUM(NSInteger, FXNavigationBarTransitonalDirection) {
           scrollSpeedFactor:(CGFloat)scrollSpeedFactor
             expandDirection:(FXNavigationBarTransitonalDirection)expandDirection;
 
+- (void)stopSubscribeScrollViewWithShowNavBar:(BOOL)showingNavBar;
+
+- (void)hideNavBarAnimated:(BOOL)animated
+              withDuration:(NSTimeInterval)duration;
+
+- (void)showNavBarAnimated:(BOOL)animated
+              withDuration:(NSTimeInterval)duration;
+
 #pragma mark - Getters and Setters
 
 - (void)setNavBarState:(FXNavigationBarState)navBarState;

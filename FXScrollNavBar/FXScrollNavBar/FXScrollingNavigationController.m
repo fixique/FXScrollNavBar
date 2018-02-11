@@ -8,6 +8,8 @@
 
 #import "FXScrollingNavigationController.h"
 
+static CGFloat animationDurationInterval = 0.1;
+
 @interface FXScrollingNavigationController () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) UIView *scrollableView;
@@ -49,6 +51,10 @@
     return self;
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 #pragma mark - Public
 
 - (void)subscribeScrollView:(UIView *)scrollableView
@@ -62,7 +68,7 @@
     self.scrollSpeedFactor = scrollSpeedFactor;
     self.collapseDirectionFactor = expandDirection;
     
-    self.gestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGesuterHandle)];
+    self.gestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGesuterHandle:)];
     self.gestureRecognizer.maximumNumberOfTouches = 1;
     self.gestureRecognizer.delegate = self;
     [self.scrollableView addGestureRecognizer:self.gestureRecognizer];
@@ -92,7 +98,63 @@
     }
 }
 
+- (void)showNavBarAnimated:(BOOL)animated withDuration:(NSTimeInterval)duration {
+    if (!self.scrollableView && !self.visibleViewController) {
+        return;
+    }
+    
+    if (self.navBarState == FXNavBarHide) {
+        [self.gestureRecognizer setEnabled:NO];
+        if (animated) {
+            self.navBarState = FXNavBarTransitional;
+            [UIView animateWithDuration:duration animations:^{
+                self.lastContentOffset = 0;
+                [self scrollWithDelta:-self.fullNavBarHeight ignoreDelay:YES];
+                [self.visibleViewController.view setNeedsLayout];
+                if (self.navigationBar.isTranslucent) {
+                    CGPoint currentOffset = self.contentOffset;
+                    [self convertScrollabelView].contentOffset = CGPointMake(currentOffset.x, currentOffset.y - self.navBarHeight);
+                }
+            } completion:^(BOOL finished) {
+                self.navBarState = FXNavBarVisible;
+                [self.gestureRecognizer setEnabled:YES];
+            }];
+        } else {
+            self.lastContentOffset = 0;
+            [self scrollWithDelta:-self.fullNavBarHeight ignoreDelay:YES];
+            [self.visibleViewController.view setNeedsLayout];
+            if (self.navigationBar.isTranslucent) {
+                CGPoint currentOffset = self.contentOffset;
+                [self convertScrollabelView].contentOffset = CGPointMake(currentOffset.x, currentOffset.y - self.navBarHeight);
+            }
+            self.navBarState = FXNavBarVisible;
+            [self.gestureRecognizer setEnabled:YES];
+        }
+    } else {
+        [self updateNavBarAlpha];
+    }
+}
 
+- (void)stopSubscribeScrollViewWithShowNavBar:(BOOL)showingNavBar {
+    if (showingNavBar) {
+        [self showNavBarAnimated:YES withDuration:animationDurationInterval];
+    }
+    
+    if (self.gestureRecognizer) {
+        [[self convertScrollabelView] removeGestureRecognizer:self.gestureRecognizer];
+    }
+    
+    self.scrollableView = nil;
+    self.gestureRecognizer = nil;
+    //TODO: nil to delegate
+    self.scrollingEnable = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIApplicationDidBecomeActiveNotification
+                                                  object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:UIDeviceOrientationDidChangeNotification
+                                                  object:nil];
+}
 
 #pragma mark - Private
 
@@ -214,6 +276,15 @@
     }
 }
 
+- (void)updateContentInsetWithDelta:(CGFloat)delta {
+    if ([self convertScrollabelView]) {
+        UIEdgeInsets contentInset = [self convertScrollabelView].contentInset;
+        UIEdgeInsets scrollInset = [self convertScrollabelView].scrollIndicatorInsets;
+        [self convertScrollabelView].contentInset = UIEdgeInsetsMake(contentInset.top - delta, contentInset.left, contentInset.bottom, contentInset.right);
+        [self convertScrollabelView].scrollIndicatorInsets = UIEdgeInsetsMake(scrollInset.top - delta, scrollInset.left, scrollInset.bottom, scrollInset.right);
+    }
+}
+
 #pragma mark - Getters and Setters
 
 - (void)setNavBarState:(FXNavigationBarState)navBarState {
@@ -224,10 +295,48 @@
     return _navBarState;
 }
 
-#pragma mark -
+#pragma mark - UIGestureRecognizerDelegate
 
-- (void)panGesuterHandle {
+- (void)panGesuterHandle:(UIPanGestureRecognizer *)gesture {
+    if (self.scrollableView.superview) {
+        CGPoint translation = [gesture translationInView:self.scrollableView.superview];
+        CGFloat delta = (self.lastContentOffset - translation.y) / self.scrollSpeedFactor;
+        if (![self checkSearchControllerWithDelta:delta]) {
+            self.lastContentOffset = translation.y;
+            return;
+        }
+        
+        if (gesture.state != UIGestureRecognizerStateFailed) {
+            self.lastContentOffset = translation.y;
+            if ([self shouldScrollWithDelta:delta]) {
+                [self scrollWithDelta:delta ignoreDelay:NO];
+            }
+        }
+    }
     
+    if (gesture.state == UIGestureRecognizerStateEnded ||
+        gesture.state == UIGestureRecognizerStateCancelled ||
+        gesture.state == UIGestureRecognizerStateFailed) {
+        [self checkForPartialScroll];
+        self.lastContentOffset = 0;
+    }
+}
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    if ([gestureRecognizer isKindOfClass:[UIPanGestureRecognizer class]]) {
+        UIPanGestureRecognizer *panReg = (UIPanGestureRecognizer *)gestureRecognizer;
+        CGPoint velocity = [panReg velocityInView:panReg.view];
+        return fabs(velocity.y) > fabs(velocity.x);
+    }
+    return YES;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return YES;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    return self.scrollingEnable;
 }
 
 #pragma mark - Notifications
@@ -248,16 +357,28 @@
 }
 
 - (void)didBecomeActive {
-    
+    if (self.expandOnActive) {
+        [self showNavBarAnimated:NO withDuration:animationDurationInterval];
+    } else {
+        if (self.prevNavBarState == FXNavBarHide) {
+            [self hideNavBarAnimated:NO withDuration:animationDurationInterval];
+        }
+    }
 }
 
 - (void)willResignActive {
-    
+    self.prevNavBarState = self.navBarState;
 }
 
 - (void)deviceDidRotate {
-    
+    [self showNavBarAnimated:YES withDuration:animationDurationInterval];
 }
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+    [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+    [self showNavBarAnimated:YES withDuration:animationDurationInterval];
+}
+
 
 #pragma mark - Size Helpers
 
@@ -332,6 +453,55 @@
     for (UIView *item in view.subviews) {
         item.alpha = alpha;
     }
+}
+
+- (BOOL)checkSearchControllerWithDelta:(CGFloat)delta {
+    if (@available(iOS 11.0, *)) {
+        if (!self.topViewController.navigationItem.searchController && delta <= 0) {
+            return NO;
+        } else {
+            if (self.topViewController.navigationItem.searchController.view.frame.size.height != 0) {
+                return NO;
+            }
+        }
+    }
+    return YES;
+}
+
+- (BOOL)shouldScrollWithDelta:(CGFloat)delta {
+    CGFloat scrollDelta = delta;
+    if (scrollDelta < 0) {
+        if (self.scrollableView && self.contentOffset.y + self.scrollableView.frame.size.height > self.contentSize.height && self.scrollableView.frame.size.height < self.contentSize.height) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (void)checkForPartialScroll {
+    CGRect frame = self.navigationBar.frame;
+    NSTimeInterval duration = 0.0;
+    CGFloat delta = 0.0;
+    
+    CGFloat thresHold = self.statusBarHeight - (frame.size.height / 2);
+    if (self.navigationBar.frame.origin.y >= thresHold) {
+        delta = frame.origin.y - self.statusBarHeight;
+        CGFloat distance = delta / (frame.size.height / 2);
+        duration = (NSTimeInterval)fabs(distance * 0.2);
+        self.navBarState = FXNavBarVisible;
+    } else {
+        delta = frame.origin.y + self.deltaLimit;
+        CGFloat distance = delta / (frame.size.height / 2);
+        duration = (NSTimeInterval)fabs(distance * 0.2);
+        self.navBarState = FXNavBarHide;
+    }
+    
+    self.delayDistance = self.maxDelay;
+    [UIView animateKeyframesWithDuration:duration delay:0 options:UIViewKeyframeAnimationOptionBeginFromCurrentState animations:^{
+        [self updateNavBarSizeWithDelta:delta];
+        [self updateNavBarAlpha];
+        [self updateContentInsetWithDelta:delta];
+    } completion:nil];
 }
 
 @end
