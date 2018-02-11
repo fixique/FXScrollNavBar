@@ -7,8 +7,12 @@
 //
 
 #import "ViewController.h"
+#import "TableViewCell.h"
+#import "FXScrollingNavigationController.h"
 
-@interface ViewController ()
+@interface ViewController () <UITableViewDelegate, UITableViewDataSource>
+
+@property (weak, nonatomic) IBOutlet UITableView *tableView;
 
 @end
 
@@ -16,14 +20,64 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    self.tableView.delegate = self;
+    self.tableView.dataSource = self;
+    self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:0.93 green:0.3 blue:0.24 alpha:1];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:nil action:nil];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    if ([self.navigationController isKindOfClass:[FXScrollingNavigationController class]]) {
+        FXScrollingNavigationController *navCtrl = (FXScrollingNavigationController *)self.navigationController;
+        [navCtrl showNavBarAnimated:YES withDuration:animationDurationInterval];
+    }
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    if ([self.navigationController isKindOfClass:[FXScrollingNavigationController class]]) {
+        FXScrollingNavigationController *navCtrl = (FXScrollingNavigationController *)self.navigationController;
+        [navCtrl subscribeScrollView:self.tableView delay:0.0 scrollSpeedFactor:1.0 expandDirection:scrollingDown];
+    }
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    
+    if ([self.navigationController isKindOfClass:[FXScrollingNavigationController class]]) {
+        FXScrollingNavigationController *navCtrl = (FXScrollingNavigationController *)self.navigationController;
+        [navCtrl stopSubscribeScrollViewWithShowNavBar:YES];
+    }
+}
+
+- (BOOL)scrollViewShouldScrollToTop:(UIScrollView *)scrollView {
+    if ([self.navigationController isKindOfClass:[FXScrollingNavigationController class]]) {
+        FXScrollingNavigationController *navCtrl = (FXScrollingNavigationController *)self.navigationController;
+        [navCtrl showNavBarAnimated:YES withDuration:animationDurationInterval];
+    }
+    return YES;
+}
+
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
+    return 1;
+}
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+    return 20;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    TableViewCell *cell = (TableViewCell *)[tableView dequeueReusableCellWithIdentifier:@"testCell" forIndexPath:indexPath];
+    cell.testPublicLabel.text = [NSString stringWithFormat:@"Test text number: %ld", indexPath.row];
+    return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return 100;
 }
 
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
 
 
 @end

@@ -14,6 +14,7 @@
 		4D7A53F9202CE37A001EF34F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4D7A53F7202CE37A001EF34F /* LaunchScreen.storyboard */; };
 		4D7A53FC202CE37A001EF34F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A53FB202CE37A001EF34F /* main.m */; };
 		4D7A5405202CE3CF001EF34F /* FXScrollingNavigationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A5404202CE3CF001EF34F /* FXScrollingNavigationController.m */; };
+		4D7A540820304FDB001EF34F /* TableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D7A540720304FDB001EF34F /* TableViewCell.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +30,8 @@
 		4D7A53FB202CE37A001EF34F /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		4D7A5403202CE3CF001EF34F /* FXScrollingNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FXScrollingNavigationController.h; sourceTree = "<group>"; };
 		4D7A5404202CE3CF001EF34F /* FXScrollingNavigationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FXScrollingNavigationController.m; sourceTree = "<group>"; };
+		4D7A540620304FDB001EF34F /* TableViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TableViewCell.h; sourceTree = "<group>"; };
+		4D7A540720304FDB001EF34F /* TableViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TableViewCell.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +74,8 @@
 				4D7A53F7202CE37A001EF34F /* LaunchScreen.storyboard */,
 				4D7A53FA202CE37A001EF34F /* Info.plist */,
 				4D7A53FB202CE37A001EF34F /* main.m */,
+				4D7A540620304FDB001EF34F /* TableViewCell.h */,
+				4D7A540720304FDB001EF34F /* TableViewCell.m */,
 			);
 			path = FXScrollNavBar;
 			sourceTree = "<group>";
@@ -158,6 +163,7 @@
 				4D7A53F1202CE37A001EF34F /* ViewController.m in Sources */,
 				4D7A5405202CE3CF001EF34F /* FXScrollingNavigationController.m in Sources */,
 				4D7A53FC202CE37A001EF34F /* main.m in Sources */,
+				4D7A540820304FDB001EF34F /* TableViewCell.m in Sources */,
 				4D7A53EE202CE37A001EF34F /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

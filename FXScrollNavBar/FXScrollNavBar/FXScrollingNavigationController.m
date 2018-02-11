@@ -8,7 +8,7 @@
 
 #import "FXScrollingNavigationController.h"
 
-static CGFloat animationDurationInterval = 0.1;
+const CGFloat animationDurationInterval = 0.1;
 
 @interface FXScrollingNavigationController () <UIGestureRecognizerDelegate>
 
