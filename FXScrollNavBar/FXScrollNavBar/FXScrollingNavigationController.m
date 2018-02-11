@@ -61,6 +61,11 @@ const CGFloat animationDurationInterval = 0.1;
                       delay:(CGFloat)delay
           scrollSpeedFactor:(CGFloat)scrollSpeedFactor
             expandDirection:(FXNavigationBarTransitonalDirection)expandDirection {
+    self.shouldScrollWhenContentFits = NO;
+    self.expandOnActive = YES;
+    self.prevNavBarState = FXNavBarVisible;
+    self.lastContentOffset = 0.0;
+    
     self.scrollableView = scrollableView;
     self.maxDelay = delay;
     self.delayDistance = delay;
@@ -217,6 +222,9 @@ const CGFloat animationDurationInterval = 0.1;
 #pragma mark - Updates
 
 - (void)updateNavBarSizeWithDelta:(CGFloat)delta {
+    if (!self.topViewController) {
+        return;
+    }
     CGRect navBarFrame = self.navigationBar.frame;
     
     // Перемещаем навбар
@@ -265,15 +273,15 @@ const CGFloat animationDurationInterval = 0.1;
         }
     }
     
-    self.topViewController.navigationItem.leftBarButtonItem.customView.alpha = alpha;
-    for (UIView *subview in self.topViewController.navigationItem.leftBarButtonItems) {
-        subview.alpha = alpha;
-    }
-    
-    self.topViewController.navigationItem.rightBarButtonItem.customView.alpha = alpha;
-    for (UIView *subview in self.topViewController.navigationItem.rightBarButtonItems) {
-        subview.alpha = alpha;
-    }
+//    self.topViewController.navigationItem.leftBarButtonItem.customView.alpha = alpha;
+//    for (UIView *subview in self.topViewController.navigationItem.leftBarButtonItems) {
+//        subview.alpha = alpha;
+//    }
+//
+//    self.topViewController.navigationItem.rightBarButtonItem.customView.alpha = alpha;
+//    for (UIView *subview in self.topViewController.navigationItem.rightBarButtonItems) {
+//        subview.alpha = alpha;
+//    }
 }
 
 - (void)updateContentInsetWithDelta:(CGFloat)delta {
@@ -487,12 +495,12 @@ const CGFloat animationDurationInterval = 0.1;
     if (self.navigationBar.frame.origin.y >= thresHold) {
         delta = frame.origin.y - self.statusBarHeight;
         CGFloat distance = delta / (frame.size.height / 2);
-        duration = (NSTimeInterval)fabs(distance * 0.2);
+        duration = fabs(distance * 0.2);
         self.navBarState = FXNavBarVisible;
     } else {
         delta = frame.origin.y + self.deltaLimit;
         CGFloat distance = delta / (frame.size.height / 2);
-        duration = (NSTimeInterval)fabs(distance * 0.2);
+        duration = fabs(distance * 0.2);
         self.navBarState = FXNavBarHide;
     }
     

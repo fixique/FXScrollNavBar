@@ -22,8 +22,13 @@
     [super viewDidLoad];
     self.tableView.delegate = self;
     self.tableView.dataSource = self;
+    self.navigationController.navigationBar.translucent = NO;
     self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:0.93 green:0.3 blue:0.24 alpha:1];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:nil action:nil];
+    if ([self.navigationController isKindOfClass:[FXScrollingNavigationController class]]) {
+        FXScrollingNavigationController *navCtrl = (FXScrollingNavigationController *)self.navigationController;
+        [navCtrl subscribeScrollView:self.tableView delay:0.0 scrollSpeedFactor:1.0 expandDirection:scrollingDown];
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -36,10 +41,7 @@
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    if ([self.navigationController isKindOfClass:[FXScrollingNavigationController class]]) {
-        FXScrollingNavigationController *navCtrl = (FXScrollingNavigationController *)self.navigationController;
-        [navCtrl subscribeScrollView:self.tableView delay:0.0 scrollSpeedFactor:1.0 expandDirection:scrollingDown];
-    }
+    
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
