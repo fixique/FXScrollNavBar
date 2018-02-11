@@ -25,6 +25,7 @@
 @property (nonatomic) CGFloat navBarHeight;
 @property (nonatomic) CGFloat statusBarHeight;
 @property (nonatomic) CGFloat extendedStatusBarDifference;
+@property (nonatomic) CGFloat fullNavBarHeight;
 @end
 
 @implementation FXScrollingNavigationController
@@ -77,14 +78,20 @@
     if (self.navBarState == FXNavBarVisible) {
         self.navBarState = FXNavBarTransitional;
         [UIView animateWithDuration:animated ? duration : 0 animations:^{
-            
+            [self scrollWithDelta:self.fullNavBarHeight ignoreDelay:NO];
+            [self.visibleViewController.view setNeedsLayout];
+            if (self.navigationBar.isTranslucent) {
+                CGPoint currentOffset = self.contentOffset;
+                [self convertScrollabelView].contentOffset = CGPointMake(currentOffset.x, currentOffset.y + self.navBarHeight);
+            }
         } completion:^(BOOL finished) {
             self.navBarState = FXNavBarHide;
         }];
     } else {
-        //TODO: UpdateNavBarAlpha
+        [self updateNavBarAlpha];
     }
 }
+
 
 
 #pragma mark - Private
@@ -141,7 +148,7 @@
     
     //TODO: Make update
     [self updateNavBarSizeWithDelta:delta];
-    
+    [self updateNavBarAlpha];
     [self restoreContentOffsetWithDelta:delta];
 }
 
@@ -170,6 +177,41 @@
     
     UIScrollView *scrollView = [self convertScrollabelView];
     [scrollView setContentOffset:CGPointMake(self.contentOffset.x, self.contentOffset.y - delta)];
+}
+
+- (void)updateNavBarAlpha {
+    CGRect navBarFrame = self.navigationBar.frame;
+    CGFloat alpha = (navBarFrame.origin.y + self.deltaLimit) / navBarFrame.size.height;
+    
+    self.topViewController.navigationItem.titleView.alpha = alpha;
+    self.navigationBar.tintColor = [self.navigationBar.tintColor colorWithAlphaComponent:alpha];
+
+    UIColor *titleColor = self.navigationBar.titleTextAttributes[NSForegroundColorAttributeName];
+    if (titleColor) {
+        NSMutableDictionary *titleTextAttributes = [self.navigationBar.titleTextAttributes mutableCopy];
+        titleTextAttributes[NSForegroundColorAttributeName] = [titleColor colorWithAlphaComponent:alpha];
+        [self.navigationBar setTitleTextAttributes:titleTextAttributes];
+    } else {
+        NSMutableDictionary *titleTextAttributes = [self.navigationBar.titleTextAttributes mutableCopy];
+        titleTextAttributes[NSForegroundColorAttributeName] = [[UIColor blackColor] colorWithAlphaComponent:alpha];
+        [self.navigationBar setTitleTextAttributes:titleTextAttributes];
+    }
+    
+    for (UIView *subview in self.navigationBar.subviews) {
+        if ([self shouldHideView:subview]) {
+            [self setAlphaOfSubview:subview withAlpha:alpha];
+        }
+    }
+    
+    self.topViewController.navigationItem.leftBarButtonItem.customView.alpha = alpha;
+    for (UIView *subview in self.topViewController.navigationItem.leftBarButtonItems) {
+        subview.alpha = alpha;
+    }
+    
+    self.topViewController.navigationItem.rightBarButtonItem.customView.alpha = alpha;
+    for (UIView *subview in self.topViewController.navigationItem.rightBarButtonItems) {
+        subview.alpha = alpha;
+    }
 }
 
 #pragma mark - Getters and Setters
@@ -260,6 +302,10 @@
     return 0;
 }
 
+- (CGFloat)fullNavBarHeight {
+    return self.navBarHeight + self.statusBarHeight;
+}
+
 #pragma mark - Helpers
 
 - (UIScrollView *)convertScrollabelView {
@@ -267,6 +313,24 @@
         return (UIScrollView *)self.scrollableView;
     } else {
         return (UIScrollView *)self.scrollableView;
+    }
+}
+
+- (BOOL)shouldHideView:(UIView *)view {
+    NSString *className = [[view.classForCoder description] stringByReplacingOccurrencesOfString:@"_" withString:@""];
+    NSMutableArray *viewNames = [@[@"UINavigationButton", @"UINavigationItemView", @"UIImageView", @"UISegmentedControl"] mutableCopy];
+    if (@available(iOS 11.0, *)) {
+        [viewNames addObject:(self.navigationBar.prefersLargeTitles ? @"UINavigationBarLargeTitleView" : @"UINavigationBarContentView")];
+    } else {
+        [viewNames addObject:@"UINavigationBarContentView"];
+    }
+    return [viewNames containsObject:className];
+}
+
+- (void)setAlphaOfSubview:(UIView *)view withAlpha:(CGFloat)alpha {
+    view.alpha = alpha;
+    for (UIView *item in view.subviews) {
+        item.alpha = alpha;
     }
 }
 
